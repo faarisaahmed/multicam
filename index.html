@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#101013">
+<title>CamRally</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
+
+<div id="toast" class="toast" aria-live="polite"></div>
+
+<!-- HOME -->
+<section class="view active" id="view-home" data-view="home">
+  <div class="wrap wrap-center">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span class="brand-word">CAMRALLY</span>
+    </div>
+    <p class="tagline">Sync a shoot across phones. One code, every camera, one album.</p>
+
+    <div class="stack">
+      <button class="btn btn-primary" id="btn-new-session">
+        <span class="btn-label">New session</span>
+        <span class="btn-sub">Generate a code &amp; invite cameras</span>
+      </button>
+      <button class="btn btn-secondary" id="btn-join-session">
+        <span class="btn-label">Join session</span>
+        <span class="btn-sub">Enter a code you were given</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- JOIN CODE ENTRY -->
+<section class="view" id="view-join" data-view="join">
+  <div class="wrap wrap-center">
+    <button class="back-btn" data-back="home">&larr;</button>
+    <h1 class="h1">Enter session code</h1>
+    <p class="sub">Ask whoever started the session for their 5-character code.</p>
+    <input class="code-input" id="join-code-input" maxlength="5" autocapitalize="characters" autocomplete="off" placeholder="- - - - -" inputmode="text">
+    <button class="btn btn-primary btn-wide" id="btn-join-continue" disabled>Continue</button>
+  </div>
+</section>
+
+<!-- ROLE PICKER (used for both new + join flows) -->
+<section class="view" id="view-role" data-view="role">
+  <div class="wrap wrap-center">
+    <button class="back-btn" data-back-dynamic></button>
+    <p class="eyebrow">Session code</p>
+    <div class="code-display" id="role-code-display">— — — — —</div>
+    <h1 class="h1">Join as</h1>
+    <div class="stack">
+      <button class="btn btn-secondary role-btn" id="btn-role-camera">
+        <span class="tally-dot tally-green"></span>
+        <span class="btn-label">Camera</span>
+        <span class="btn-sub">This phone records</span>
+      </button>
+      <button class="btn btn-secondary role-btn" id="btn-role-controller">
+        <span class="tally-dot tally-amber"></span>
+        <span class="btn-label">Controller</span>
+        <span class="btn-sub">This phone directs &amp; reviews</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- CAMERA VIEW -->
+<section class="view" id="view-camera" data-view="camera">
+  <div class="cam-header">
+    <div class="cam-header-left">
+      <span class="tally-dot" id="cam-status-dot"></span>
+      <span class="cam-status-text" id="cam-status-text">Connecting…</span>
+    </div>
+    <div class="cam-header-right">
+      <span class="code-chip" id="cam-code-chip">-----</span>
+      <button class="icon-btn" id="btn-open-cam-album" title="Album">
+        🎞<span class="badge" id="cam-album-count"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="cam-stage">
+    <video id="cam-live" autoplay playsinline muted></video>
+    <video id="cam-review" playsinline controls style="display:none;"></video>
+    <div class="cam-waiting" id="cam-waiting">
+      <span class="tally-dot tally-green pulse-soft"></span>
+      <span>Waiting for the controller</span>
+    </div>
+  </div>
+
+  <div class="cam-review-bar" id="cam-review-bar" style="display:none;">
+    <p class="review-question">Keep this take?</p>
+    <div class="review-actions">
+      <button class="btn btn-ghost" id="btn-retake">Retake</button>
+      <button class="btn btn-primary" id="btn-save-clip">Save to album</button>
+    </div>
+  </div>
+
+  <div class="cam-footer">
+    <button class="icon-btn" id="btn-flip-camera" title="Flip camera">⟲</button>
+    <input class="name-input" id="cam-name-input" placeholder="Name this camera" maxlength="20">
+    <button class="icon-btn icon-btn-danger" id="btn-leave-camera" title="Leave session">⏻</button>
+  </div>
+
+  <div class="album-modal" id="cam-album-modal">
+    <div class="album-modal-sheet">
+      <div class="album-modal-header">
+        <p class="section-label" style="margin:0;">Album</p>
+        <div class="album-modal-header-actions">
+          <button class="save-all-btn" id="btn-save-all-cam">Save all</button>
+          <button class="icon-btn" id="btn-close-cam-album">✕</button>
+        </div>
+      </div>
+      <div class="album-list" id="cam-album-list">
+        <p class="empty-hint">Saved takes will show up here.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTROLLER VIEW -->
+<section class="view" id="view-controller" data-view="controller">
+  <div class="ctrl-header">
+    <div>
+      <p class="eyebrow">Session</p>
+      <div class="code-display code-display-sm" id="ctrl-code-display">-----</div>
+    </div>
+    <button class="icon-btn icon-btn-danger" id="btn-leave-controller" title="Leave session">⏻</button>
+  </div>
+
+  <div class="ctrl-body">
+    <div class="page-tabs" id="page-tabs">
+      <button class="page-tab active" data-page="recording">Recording</button>
+      <button class="page-tab" data-page="feed">Feed</button>
+    </div>
+
+    <div class="ctrl-page active" data-page="recording" id="page-recording">
+      <div class="mode-select-wrap">
+        <select class="select-input" id="mode-select">
+          <option value="manual">Manual</option>
+          <option value="swap">Swap</option>
+          <option value="group">Simultaneous</option>
+        </select>
+      </div>
+      <p class="mode-hint" id="mode-hint">Each camera records independently — start, stop, and review takes on its own.</p>
+
+      <div class="sync-bar" id="group-bar" style="display:none;">
+        <button class="btn btn-primary btn-wide" id="btn-group-toggle">Turn on all</button>
+      </div>
+
+      <div class="ctrl-section">
+        <p class="section-label">Cameras</p>
+        <div class="camera-grid" id="camera-grid">
+          <p class="empty-hint">No cameras connected yet. Share the code above.</p>
+        </div>
+      </div>
+
+      <div class="ctrl-section">
+        <div class="section-header-row">
+          <p class="section-label" style="margin:0;">Album</p>
+          <button class="save-all-btn" id="btn-save-all-ctrl">Save all</button>
+        </div>
+        <div class="album-list" id="album-list">
+          <p class="empty-hint">Saved takes will show up here.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="ctrl-page" data-page="feed" id="page-feed">
+      <div class="ctrl-section">
+        <p class="section-label">Live feed</p>
+        <div class="live-feed-dropdown-wrap" id="live-feed-dropdown-wrap" style="display:none;">
+          <select class="select-input" id="live-feed-select"></select>
+        </div>
+        <div class="live-feed-container" id="live-feed-container">
+          <p class="empty-hint">No camera currently recording.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Anyone who knows a session code can read/create that session.
+    // The 5-character code is the shared secret, like a meeting room code.
+    // Clip video data never touches this database — it's sent directly
+    // phone-to-phone and never persisted, so there's nothing to secure here
+    // beyond the small signaling documents below.
+    match /sessions/{code} {
+      allow read: if true;
+      allow create: if isValidSession(request.resource.data);
+      allow delete: if true; // controller ends the session
+      allow update: if false;
+
+      match /cameras/{cameraId} {
+        allow read: if true;
+        allow create: if isValidCamera(request.resource.data);
+        allow update: if true; // status/command/lastSeen/name updates
+        allow delete: if true; // camera leaves, or controller ends session
+      }
+    }
+  }
+
+  function isValidSession(data) {
+    return data.keys().hasAll(['createdAt']);
+  }
+
+  function isValidCamera(data) {
+    return data.keys().hasAll(['name', 'status', 'commandSeq'])
+      && data.name is string && data.name.size() <= 40
+      && data.status in ['idle', 'recording', 'reviewing'];
+  }
+}
